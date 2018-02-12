@@ -1,21 +1,11 @@
 <?php
 
-class Router {
-
+class Router
+{
     protected $routes = [
         'GET' => [],
         'POST' => []
     ];
-
-    public function direct($uri, $requestType)
-    {
-        if (array_key_exists($uri, $this->routes[$requestType])) {
-            return $this->routes[$requestType][$uri];
-        }
-
-        throw new Exception("No routes define for this URI");
-
-    }
 
     public static function load($file)
     {
@@ -36,4 +26,27 @@ class Router {
         $this->routes['POST'][$uri] = $controllers;
     }
 
+    public function direct($uri, $requestType)
+    {
+        if (array_key_exists($uri, $this->routes[$requestType])) {
+            return $this->callAction(
+                ...explode('@', $this->routes[$requestType][$uri])
+            );
+        }
+
+        throw new Exception("No routes define for this URI");
+    }
+
+    protected function callAction($controller, $action)
+    {
+        $controller = new $controller;
+
+        if (! method_exists($controller, $action)) {
+            throw new Exception(
+                "{$controller} dows not respond to the {$action} action."
+            );
+        }
+
+        return $controller->$action();
+    }
 }
